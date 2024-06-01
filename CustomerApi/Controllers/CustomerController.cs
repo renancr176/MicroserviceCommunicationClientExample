@@ -8,6 +8,7 @@ using Identity.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
+using Exception = System.Exception;
 
 namespace CustomerApi.Controllers
 {
@@ -97,6 +98,51 @@ namespace CustomerApi.Controllers
                     request.Email);
 
                 await _customerRepository.InsertAsync(customer);
+                await _customerRepository.SaveChangesAsync();
+
+                return Response(new CustomerModel()
+                {
+                    Id = customer.Id,
+                    Name = customer.Name,
+                    Email = customer.Email,
+                    BirthDate = customer.BirthDate,
+                    Document = customer.Document
+                });
+            }
+            catch (Exception e)
+            {
+                return Response(e);
+            }
+        }
+
+        [HttpPut]
+        [SwaggerResponse(200, Type = typeof(BaseResponse<CustomerModel?>))]
+        [SwaggerResponse(400, Type = typeof(BaseResponse))]
+        [SwaggerResponse(401)]
+        public async Task<IActionResult> UpdateAsync([FromBody] UpdateCustomerRequest request)
+        {
+            if (!ModelState.IsValid) return InvalidModelResponse();
+
+            try
+            {
+                var customer = await _customerRepository.GetByIdAsync(request.Id);
+
+                if (customer != null 
+                    && !await _userService.CurrentUserHasRole(RoleEnum.Admin) 
+                    && customer.UserId != _userService.UserId)
+                {
+                    return Forbid();
+                } else if (customer == null)
+                {
+                    throw new Exception("Customer not found");
+                }
+
+                customer.Name = request.Name;
+                customer.BirthDate = request.BirthDate;
+                customer.Document = request.Document;
+                customer.Email = request.Email;
+
+                await _customerRepository.UpdateAsync(customer);
                 await _customerRepository.SaveChangesAsync();
 
                 return Response(new CustomerModel()

@@ -143,7 +143,7 @@ namespace ProductApi.Controllers
         }
 
         [HttpDelete("{id:guid}")]
-        [SwaggerResponse(200, Type = typeof(BaseResponse<ProductModel?>))]
+        [SwaggerResponse(200, Type = typeof(BaseResponse))]
         [SwaggerResponse(400, Type = typeof(BaseResponse))]
         [SwaggerResponse(401)]
         public async Task<IActionResult> DeleteAsync([FromRoute] Guid id)
