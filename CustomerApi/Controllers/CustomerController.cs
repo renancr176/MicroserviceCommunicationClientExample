@@ -39,6 +39,7 @@ namespace CustomerApi.Controllers
                 return Response(customers?.Select(x => new CustomerModel()
                 {
                     Id = x.Id,
+                    UserId = x.UserId,
                     Name = x.Name,
                     Email = x.Email,
                     BirthDate = x.BirthDate,
@@ -63,15 +64,16 @@ namespace CustomerApi.Controllers
                 if (!await _userService.CurrentUserHasRole(RoleEnum.Admin) && id != _userService.UserId)
                     return Forbid();
 
-                var customer = await _customerRepository.GetByIdAsync(id);
+                var entity = await _customerRepository.GetByIdAsync(id);
 
-                return Response(customer != null ? new CustomerModel()
+                return Response(entity != null ? new CustomerModel()
                 {
-                    Id = customer.Id,
-                    Name = customer.Name,
-                    Email = customer.Email,
-                    BirthDate = customer.BirthDate,
-                    Document = customer.Document
+                    Id = entity.Id,
+                    UserId = entity.UserId,
+                    Name = entity.Name,
+                    Email = entity.Email,
+                    BirthDate = entity.BirthDate,
+                    Document = entity.Document
                 } : null);
             }
             catch (Exception e)
@@ -90,23 +92,24 @@ namespace CustomerApi.Controllers
 
             try
             {
-                var customer = new Customer(
+                var entity = new Customer(
                     _userService.UserId.Value, 
                     request.Name,
                     request.BirthDate,
                     request.Document,
                     request.Email);
 
-                await _customerRepository.InsertAsync(customer);
+                await _customerRepository.InsertAsync(entity);
                 await _customerRepository.SaveChangesAsync();
 
                 return Response(new CustomerModel()
                 {
-                    Id = customer.Id,
-                    Name = customer.Name,
-                    Email = customer.Email,
-                    BirthDate = customer.BirthDate,
-                    Document = customer.Document
+                    Id = entity.Id,
+                    UserId = entity.UserId,
+                    Name = entity.Name,
+                    Email = entity.Email,
+                    BirthDate = entity.BirthDate,
+                    Document = entity.Document
                 });
             }
             catch (Exception e)
@@ -125,33 +128,34 @@ namespace CustomerApi.Controllers
 
             try
             {
-                var customer = await _customerRepository.GetByIdAsync(request.Id);
+                var entity = await _customerRepository.GetByIdAsync(request.Id);
 
-                if (customer != null 
+                if (entity != null 
                     && !await _userService.CurrentUserHasRole(RoleEnum.Admin) 
-                    && customer.UserId != _userService.UserId)
+                    && entity.UserId != _userService.UserId)
                 {
                     return Forbid();
-                } else if (customer == null)
+                } else if (entity == null)
                 {
                     throw new Exception("Customer not found");
                 }
 
-                customer.Name = request.Name;
-                customer.BirthDate = request.BirthDate;
-                customer.Document = request.Document;
-                customer.Email = request.Email;
+                entity.Name = request.Name;
+                entity.BirthDate = request.BirthDate;
+                entity.Document = request.Document;
+                entity.Email = request.Email;
 
-                await _customerRepository.UpdateAsync(customer);
+                await _customerRepository.UpdateAsync(entity);
                 await _customerRepository.SaveChangesAsync();
 
                 return Response(new CustomerModel()
                 {
-                    Id = customer.Id,
-                    Name = customer.Name,
-                    Email = customer.Email,
-                    BirthDate = customer.BirthDate,
-                    Document = customer.Document
+                    Id = entity.Id,
+                    UserId = entity.UserId,
+                    Name = entity.Name,
+                    Email = entity.Email,
+                    BirthDate = entity.BirthDate,
+                    Document = entity.Document
                 });
             }
             catch (Exception e)
