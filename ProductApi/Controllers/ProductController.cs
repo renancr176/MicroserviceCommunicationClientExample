@@ -75,6 +75,38 @@ namespace ProductApi.Controllers
             }
         }
 
+        [HttpGet("Search")]
+        [AllowAnonymous]
+        [SwaggerResponse(200, Type = typeof(BaseResponse<IEnumerable<ProductModel>?>))]
+        [SwaggerResponse(400, Type = typeof(BaseResponse))]
+        [SwaggerResponse(401)]
+        [SwaggerResponse(403)]
+        public async Task<IActionResult> SearchAsync([FromQuery] ProductSearchRequest request)
+        {
+            try
+            {
+                var entities = await _productRepository.GetPagedAsync(
+                    request.Page,
+                    request.Size,
+                    p =>
+                        (!request.Ids.Any() || request.Ids.Contains(p.Id))
+                        && (string.IsNullOrEmpty(request.Name) || p.Name.Contains(request.Name))
+                        && (!request.Active.HasValue || p.Active == request.Active));
+
+                return Response(entities?.Select(x => new ProductModel()
+                {
+                    Id = x.Id,
+                    Name = x.Name,
+                    Price = x.Price,
+                    Active = x.Active
+                }));
+            }
+            catch (Exception e)
+            {
+                return Response(e);
+            }
+        }
+
         [HttpPost]
         [SwaggerResponse(200, Type = typeof(BaseResponse<ProductModel?>))]
         [SwaggerResponse(400, Type = typeof(BaseResponse))]

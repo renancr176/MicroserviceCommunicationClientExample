@@ -4,6 +4,8 @@ using CustomerApiClient.Models;
 using CustomerApiClient.Models.Requests;
 using CustomerApiClient.Models.Responses;
 using Flurl.Http;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using System.Drawing;
 
 namespace CustomerApiClient.Services;
 
@@ -30,6 +32,25 @@ public class CustomerService : ICustomerService
         {
             return await Url
                 .SetQueryParams(new { page, size })
+                .ResilientGetJsonAsync<BaseResponse<IEnumerable<CustomerResponseModel>?>>();
+        }
+        catch (FlurlHttpException e)
+        {
+            return await e.ToResponseAsync<IEnumerable<CustomerResponseModel>?>();
+        }
+        catch (Exception e)
+        {
+            return e.ToResponse<IEnumerable<CustomerResponseModel>?>();
+        }
+    }
+
+    public async Task<BaseResponse<IEnumerable<CustomerResponseModel>?>> SearchAsync(CustomerSearchRequest request)
+    {
+        try
+        {
+            return await Url
+                .AppendPathSegment("/Search")
+                .SetJsonQueryParams(request)
                 .ResilientGetJsonAsync<BaseResponse<IEnumerable<CustomerResponseModel>?>>();
         }
         catch (FlurlHttpException e)

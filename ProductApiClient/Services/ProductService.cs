@@ -1,9 +1,11 @@
 ﻿using Flurl.Http;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using ProductApiClient.Extensions;
 using ProductApiClient.Interfaces.Services;
 using ProductApiClient.Models;
 using ProductApiClient.Models.Requests;
 using ProductApiClient.Models.Responses;
+using System.Drawing;
 
 namespace ProductApiClient.Services;
 
@@ -31,6 +33,25 @@ public class ProductService : IProductService
         {
             return await Url
                 .SetQueryParams(new { page, size })
+                .GetJsonAsync<BaseResponse<IEnumerable<ProductResponseModel>?>>();
+        }
+        catch (FlurlHttpException e)
+        {
+            return await e.ToResponseAsync<IEnumerable<ProductResponseModel>?>();
+        }
+        catch (Exception e)
+        {
+            return e.ToResponse<IEnumerable<ProductResponseModel>?>();
+        }
+    }
+
+    public async Task<BaseResponse<IEnumerable<ProductResponseModel>?>> SearchAsync(ProductSearchRequest request)
+    {
+        try
+        {
+            return await Url
+                .AppendPathSegment("/Search")
+                .SetJsonQueryParams(request)
                 .GetJsonAsync<BaseResponse<IEnumerable<ProductResponseModel>?>>();
         }
         catch (FlurlHttpException e)

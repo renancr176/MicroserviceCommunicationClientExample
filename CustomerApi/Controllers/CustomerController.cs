@@ -35,8 +35,8 @@ namespace CustomerApi.Controllers
         {
             try
             {
-                var customers = await _customerRepository.GetPagedAsync(page, size);
-                return Response(customers?.Select(x => new CustomerModel()
+                var entities = await _customerRepository.GetPagedAsync(page, size);
+                return Response(entities?.Select(x => new CustomerModel()
                 {
                     Id = x.Id,
                     UserId = x.UserId,
@@ -75,6 +75,44 @@ namespace CustomerApi.Controllers
                     BirthDate = entity.BirthDate,
                     Document = entity.Document
                 } : null);
+            }
+            catch (Exception e)
+            {
+                return Response(e);
+            }
+        }
+
+        [HttpGet("Search")]
+        [SwaggerResponse(200, Type = typeof(BaseResponse<IEnumerable<CustomerModel>?>))]
+        [SwaggerResponse(400, Type = typeof(BaseResponse))]
+        [SwaggerResponse(401)]
+        [SwaggerResponse(403)]
+        public async Task<IActionResult> SearchAsync([FromQuery] CustomerSearchRequest request)
+        {
+            try
+            {
+                var admin = await _userService.CurrentUserHasRole(RoleEnum.Admin);
+
+                var entities = await _customerRepository.GetPagedAsync(
+                    request.Page, 
+                    request.Size,
+                    c => 
+                        (admin || c.UserId == _userService.UserId)
+                        && (!request.UserId.HasValue || c.UserId == request.UserId)
+                        && (string.IsNullOrEmpty(request.Name) || c.Name.Contains(request.Name))
+                        && (string.IsNullOrEmpty(request.Document) || c.Document == request.Document)
+                    );
+
+                return Response(entities != null && entities.Any() 
+                    ? entities?.Select(x => new CustomerModel()
+                    {
+                        Id = x.Id,
+                        UserId = x.UserId,
+                        Name = x.Name,
+                        Email = x.Email,
+                        BirthDate = x.BirthDate,
+                        Document = x.Document
+                    }) : null);
             }
             catch (Exception e)
             {
