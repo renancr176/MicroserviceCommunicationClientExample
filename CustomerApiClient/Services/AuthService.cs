@@ -20,6 +20,7 @@ public class AuthService : IAuthService
 
     private CustomerApiClientOptions CustomerApiClientOptions => _options.Value;
     private DateTime TokenValidUntil { get; set; } = DateTime.UtcNow;
+    private DateTime RefreshTokenValidUntil { get; set; } = DateTime.UtcNow;
     private SignInResponse SignInResponse { get; set; }
 
     private string GetAccessToken()
@@ -34,16 +35,9 @@ public class AuthService : IAuthService
                 try
                 {
                     IFlurlResponse result;
-                    if (string.IsNullOrEmpty(SignInResponse?.AccessToken) || string.IsNullOrEmpty(SignInResponse?.RefreshToken))
-                    {
-                        result = await CustomerApiClientOptions.AuthUrl
-                            .PostJsonAsync(new
-                            {
-                                username = CustomerApiClientOptions.UserName,
-                                password = CustomerApiClientOptions.Password,
-                            });
-                    }
-                    else
+                    if (!string.IsNullOrEmpty(SignInResponse?.AccessToken) 
+                    && !string.IsNullOrEmpty(SignInResponse?.RefreshToken)
+                    && RefreshTokenValidUntil > DateTime.UtcNow)
                     {
                         result = await CustomerApiClientOptions.AuthUrl
                             .AppendPathSegment("/Refresh")
@@ -53,10 +47,20 @@ public class AuthService : IAuthService
                                 SignInResponse.RefreshToken
                             });
                     }
+                    else
+                    {
+                        result = await CustomerApiClientOptions.AuthUrl
+                            .PostJsonAsync(new
+                            {
+                                username = CustomerApiClientOptions.UserName,
+                                password = CustomerApiClientOptions.Password,
+                            });
+                    }
 
                     SignInResponse = JsonConvert.DeserializeObject<SignInResponse>(await result.GetStringAsync());
 
                     TokenValidUntil = DateTime.UtcNow.Add(TimeSpan.FromSeconds(SignInResponse.ExpiresInSeconds));
+                    RefreshTokenValidUntil = DateTime.UtcNow.Add(TimeSpan.FromSeconds(SignInResponse.RefreshTokenExpiresInSeconds));
                 }
                 catch (Exception e) { }
             }).Wait();
