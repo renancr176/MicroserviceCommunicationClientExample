@@ -13,7 +13,7 @@ public class ProductMapping : EntityMap<Product>
 
         builder.ToTable("Products");
 
-        builder.HasIndex(e => new { e.Id, e.OrderId })
+        builder.HasIndex(e => new { e.OrderId, e.ProductId })
             .IsUnique();
 
         builder.Property(e => e.Name)

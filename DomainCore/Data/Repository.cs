@@ -243,9 +243,19 @@ public abstract class RepositoryIntId<TDbContext, TEntity> : Repository<TDbConte
     {
     }
 
-    public virtual async Task<TEntity?> GetByIdAsync(int id)
+    public virtual async Task<TEntity?> GetByIdAsync(int id, IEnumerable<string> includes = null)
     {
-        return await BaseQuery.FirstOrDefaultAsync(e => e.Id == id);
+        var query = BaseQuery;
+
+        if (includes != null && includes.Any())
+        {
+            foreach (var include in includes)
+            {
+                query = query.Include(include);
+            }
+        }
+
+        return await query.FirstOrDefaultAsync(e => e.Id == id);
     }
 
     public virtual async Task DeleteAsync(int id)

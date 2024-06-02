@@ -17,7 +17,7 @@ public class Order : EntityIntId
     {
     }
 
-    public Order(Guid customerId, ICollection<Product> products)
+    public Order(Guid customerId, List<Product> products)
     {
         CustomerId = customerId;
         Products = products;

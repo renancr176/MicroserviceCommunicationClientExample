@@ -73,6 +73,9 @@ namespace OrderApi.DbContexts.OrderDb.Migrations
                         .HasPrecision(10, 2)
                         .HasColumnType("decimal(10,2)");
 
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<int>("Quantity")
                         .HasColumnType("int");
 
@@ -81,9 +84,7 @@ namespace OrderApi.DbContexts.OrderDb.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("OrderId");
-
-                    b.HasIndex("Id", "OrderId")
+                    b.HasIndex("OrderId", "ProductId")
                         .IsUnique();
 
                     b.ToTable("Products", (string)null);

@@ -40,6 +40,6 @@ public interface IRepository<TEntity> : IDisposable
 public interface IRepositoryIntId<TEntity> : IRepository<TEntity>
     where TEntity : EntityIntId
 {
-    Task<TEntity?> GetByIdAsync(int id);
+    Task<TEntity?> GetByIdAsync(int id, IEnumerable<string> includes = null);
     Task DeleteAsync(int id);
 }

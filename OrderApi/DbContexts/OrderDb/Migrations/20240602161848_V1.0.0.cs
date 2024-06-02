@@ -33,6 +33,7 @@ namespace OrderApi.DbContexts.OrderDb.Migrations
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     OrderId = table.Column<int>(type: "int", nullable: false),
+                    ProductId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Name = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
                     Price = table.Column<decimal>(type: "decimal(10,2)", precision: 10, scale: 2, nullable: false),
                     Quantity = table.Column<int>(type: "int", nullable: false),
@@ -52,15 +53,10 @@ namespace OrderApi.DbContexts.OrderDb.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_Products_Id_OrderId",
+                name: "IX_Products_OrderId_ProductId",
                 table: "Products",
-                columns: new[] { "Id", "OrderId" },
+                columns: new[] { "OrderId", "ProductId" },
                 unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Products_OrderId",
-                table: "Products",
-                column: "OrderId");
         }
 
         /// <inheritdoc />

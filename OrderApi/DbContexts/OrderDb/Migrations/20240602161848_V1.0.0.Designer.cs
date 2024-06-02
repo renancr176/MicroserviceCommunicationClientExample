@@ -12,7 +12,7 @@ using OrderApi.DbContexts.OrderDb;
 namespace OrderApi.DbContexts.OrderDb.Migrations
 {
     [DbContext(typeof(OrderDbContext))]
-    [Migration("20240531145256_V1.0.0")]
+    [Migration("20240602161848_V1.0.0")]
     partial class V100
     {
         /// <inheritdoc />
@@ -76,6 +76,9 @@ namespace OrderApi.DbContexts.OrderDb.Migrations
                         .HasPrecision(10, 2)
                         .HasColumnType("decimal(10,2)");
 
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<int>("Quantity")
                         .HasColumnType("int");
 
@@ -84,9 +87,7 @@ namespace OrderApi.DbContexts.OrderDb.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("OrderId");
-
-                    b.HasIndex("Id", "OrderId")
+                    b.HasIndex("OrderId", "ProductId")
                         .IsUnique();
 
                     b.ToTable("Products", (string)null);
