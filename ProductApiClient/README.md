@@ -7,8 +7,8 @@ Add the below snippet to configure this client by the appsettiongs.json configur
 	"ProductApi": {
         "AuthUrl": "https://localhost:7052/User/SignIn",
         "Url": "https://localhost:7009",
-        "UserName": "admin@mydomain.com",
-        "Password": "Admin@123"
+        "UserName": "",
+        "Password": ""
     }
 }
 ```

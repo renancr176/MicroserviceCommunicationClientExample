@@ -4,7 +4,7 @@ Add the below snippet to configure this client by the appsettiongs.json configur
 
 ```bash
 {
-	"CustomerApi": {
+    "CustomerApi": {
         "AuthUrl": "https://localhost:7052/User/SignIn",
         "Url": "https://localhost:7198",
         "UserName": "",
