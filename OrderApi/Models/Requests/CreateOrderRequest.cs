@@ -4,7 +4,6 @@ namespace OrderApi.Models.Requests;
 
 public class CreateOrderRequest
 {
-    [Required]
-    [Range(1, Int32.MaxValue)]
-    public IEnumerable<ProductRequest> IdProducts { get; set; }
+    [Required, MinLength(1)]
+    public IEnumerable<ProductRequest> Products { get; set; }
 }

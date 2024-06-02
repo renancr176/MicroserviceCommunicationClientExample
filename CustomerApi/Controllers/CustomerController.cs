@@ -61,10 +61,13 @@ namespace CustomerApi.Controllers
         {
             try
             {
-                if (!await _userService.CurrentUserHasRole(RoleEnum.Admin) && id != _userService.UserId)
-                    return Forbid();
-
                 var entity = await _customerRepository.GetByIdAsync(id);
+
+                if (entity != null)
+                {
+                    if (!await _userService.CurrentUserHasRole(RoleEnum.Admin) && entity.UserId != _userService.UserId)
+                        return Forbid();
+                }
 
                 return Response(entity != null ? new CustomerModel()
                 {

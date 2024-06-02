@@ -5,6 +5,7 @@ using Microsoft.OpenApi.Models;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using CustomerApiClient;
 using DomainCore.Models;
 using Identity.IdentityDbContext;
 using Identity.IdentityDbContext.Entities;
@@ -13,6 +14,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using OrderApi.DbContexts.OrderDb;
+using ProductApiClient;
 
 namespace OrderApi;
 
@@ -162,10 +164,14 @@ public class Startup : IStartup
 
         #endregion
 
+
         services.AddIdentityServices();
         services.AddIdentityDb(Configuration);
 
         services.AddOrderDb(Configuration);
+
+        services.AddCustomerApiClient(Configuration);
+        services.AddProductApiClient(Configuration);
 
         Init(services.BuildServiceProvider());
     }

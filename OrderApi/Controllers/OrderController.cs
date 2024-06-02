@@ -1,4 +1,7 @@
-﻿using DomainCore.Enums;
+﻿using System.Linq.Expressions;
+using CustomerApiClient.Interfaces.Services;
+using CustomerApiClient.Models.Requests;
+using DomainCore.Enums;
 using DomainCore.Models;
 using Identity.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -7,6 +10,8 @@ using OrderApi.DbContexts.OrderDb.Entities;
 using OrderApi.DbContexts.OrderDb.Interfaces.Repositories;
 using OrderApi.Models;
 using OrderApi.Models.Requests;
+using ProductApiClient.Interfaces.Services;
+using ProductApiClient.Models.Requests;
 using Swashbuckle.AspNetCore.Annotations;
 
 namespace OrderApi.Controllers
@@ -17,17 +22,21 @@ namespace OrderApi.Controllers
     public class OrderController : BaseController
     {
         private readonly IOrderRepository _orderRepository;
+        private readonly ICustomerService _customerService;
+        private readonly IProductService _productService;
 
-        public OrderController(IUserService userService, IOrderRepository orderRepository) 
+        public OrderController(IUserService userService, IOrderRepository orderRepository,
+            ICustomerService customerService, IProductService productService) 
             : base(userService)
         {
             _orderRepository = orderRepository;
+            _customerService = customerService;
+            _productService = productService;
         }
 
         private static IEnumerable<string> Includes = new[] { "Products" };
 
         [HttpGet]
-        [Authorize("Bearer", Roles = $"{nameof(RoleEnum.Admin)}")]
         [SwaggerResponse(200, Type = typeof(BaseResponse<IEnumerable<OrderModel>?>))]
         [SwaggerResponse(400, Type = typeof(BaseResponse))]
         [SwaggerResponse(401)]
@@ -36,7 +45,22 @@ namespace OrderApi.Controllers
         {
             try
             {
-                var entities = await _orderRepository.GetPagedAsync(page, size, includes: Includes);
+                var admin = await _userService.CurrentUserHasRole(RoleEnum.Admin);
+                var customer =
+                    (await _customerService.SearchAsync(new CustomerSearchRequest(userId: _userService.UserId)))
+                    .Data
+                    ?.FirstOrDefault();
+
+                var entities = await _orderRepository.GetPagedAsync(
+                    page, 
+                    size, 
+                    includes: Includes,
+                    o => 
+                    (admin || o.CustomerId == customer.Id),
+                    ordenations: new Dictionary<Expression<Func<Order, object>>, OrderByEnum>()
+                    {
+                        {o => o.Id, OrderByEnum.Descending}
+                    });
                 return Response(entities?.Select(o => new OrderModel()
                 {
                     Id = o.Id,
@@ -58,19 +82,24 @@ namespace OrderApi.Controllers
             }
         }
 
-        [HttpGet("{id:guid}")]
+        [HttpGet("{id:int}")]
         [SwaggerResponse(200, Type = typeof(BaseResponse<OrderModel?>))]
         [SwaggerResponse(400, Type = typeof(BaseResponse))]
         [SwaggerResponse(401)]
         [SwaggerResponse(403)]
-        public async Task<IActionResult> GetByIdAsync([FromRoute] Guid id)
+        public async Task<IActionResult> GetByIdAsync([FromRoute] int id)
         {
             try
             {
                 var entity = await _orderRepository.GetByIdAsync(id, Includes);
 
-                //if (!await _userService.CurrentUserHasRole(RoleEnum.Admin) && id != _userService.UserId)
-                //    return Forbid();
+                if (entity != null)
+                {
+                    var customer = await _customerService.GetByIdAsync(entity.CustomerId);
+                    if (!await _userService.CurrentUserHasRole(RoleEnum.Admin) 
+                        && customer.Data?.UserId != _userService.UserId)
+                        return Forbid();
+                }
 
                 return Response(entity != null ? new OrderModel()
                 {
@@ -103,12 +132,54 @@ namespace OrderApi.Controllers
 
             try
             {
-                //TODO: Check and get customer by loged user _userService.UserId
-                var customerId = Guid.Empty;
-                //TODO: Check and get produts by request Product.Id
-                var  products = new List<Product>();
+                //TODO: Check and get customer by logued user _userService.UserId
+                var customer =
+                    (await _customerService
+                        .SearchAsync(new CustomerSearchRequest(userId: _userService.UserId)))
+                    .Data.FirstOrDefault();
 
-                var entity = new Order(customerId, products);
+                if (customer == null)
+                    return BadRequest(new BaseResponse()
+                    {
+                        Errors = new List<BaseResponseError>()
+                        {
+                            new BaseResponseError()
+                            {
+                                ErrorCode = "CustomerNotFound",
+                                Message = "Customer not found."
+                            }
+                        }
+                    });
+
+                //TODO: Check and get produts by request Product.Id
+                var  products = await _productService.SearchAsync(
+                    new ProductSearchRequest(
+                        size: request.Products.Count(),
+                        ids: request.Products.Select(x => x.Id),
+                        active: true));
+
+                if (products.Data.Count() != request.Products.Count())
+                    return BadRequest(new BaseResponse()
+                    {
+                        Errors = request.Products
+                            .Where(x => !products.Data.Any(p => p.Id == x.Id))
+                            .Select(x => new BaseResponseError()
+                            {
+                                ErrorCode = "ProductNotFound",
+                                Message = $"The product of ID {x.Id} not exists or it is not active."
+                            }).ToList()
+                    });
+
+                var entity = new Order(
+                    customer.Id, 
+                    products.Data.Select(p => 
+                        new Product(
+                            p.Id,
+                            p.Name, 
+                            p.Price,
+                            request.Products.FirstOrDefault(x => x.Id == p.Id).Quantity
+                        )
+                    ).ToList());
 
                 await _orderRepository.InsertAsync(entity);
                 await _orderRepository.SaveChangesAsync();
@@ -134,11 +205,11 @@ namespace OrderApi.Controllers
             }
         }
 
-        [HttpDelete("{id:guid}")]
+        [HttpDelete("{id:int}")]
         [SwaggerResponse(200, Type = typeof(BaseResponse<OrderModel?>))]
         [SwaggerResponse(400, Type = typeof(BaseResponse))]
         [SwaggerResponse(401)]
-        public async Task<IActionResult> DeleteAsync([FromRoute] Guid id)
+        public async Task<IActionResult> DeleteAsync([FromRoute] int id)
         {
             if (!ModelState.IsValid) return InvalidModelResponse();
 
@@ -146,16 +217,18 @@ namespace OrderApi.Controllers
             {
                 var entity = await _orderRepository.GetByIdAsync(id);
 
-                if (entity == null)
+                if (entity != null)
+                {
+                    //TODO: Check and get customer by logued user _userService.UserId
+                    var customer =
+                        await _customerService.SearchAsync(new CustomerSearchRequest(userId: _userService.UserId));
+                    if (!await _userService.CurrentUserHasRole(RoleEnum.Admin) 
+                        && entity.CustomerId != customer.Data?.FirstOrDefault()?.Id)
+                        return Forbid();
+                } else
                 {
                     throw new Exception("Order not found.");
                 }
-
-                //TODO: Check and get customer by loged user _userService.UserId
-                var customerId = Guid.Empty;
-
-                if (!await _userService.CurrentUserHasRole(RoleEnum.Admin) && entity.CustomerId != customerId)
-                    return Forbid();
 
                 await _orderRepository.DeleteAsync(id);
                 await _orderRepository.SaveChangesAsync();
