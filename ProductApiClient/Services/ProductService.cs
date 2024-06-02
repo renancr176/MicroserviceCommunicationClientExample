@@ -33,7 +33,7 @@ public class ProductService : IProductService
         {
             return await Url
                 .SetQueryParams(new { page, size })
-                .GetJsonAsync<BaseResponse<IEnumerable<ProductResponseModel>?>>();
+                .ResilientGetJsonAsync<BaseResponse<IEnumerable<ProductResponseModel>?>>();
         }
         catch (FlurlHttpException e)
         {
@@ -52,7 +52,7 @@ public class ProductService : IProductService
             return await Url
                 .AppendPathSegment("/Search")
                 .SetJsonQueryParams(request)
-                .GetJsonAsync<BaseResponse<IEnumerable<ProductResponseModel>?>>();
+                .ResilientGetJsonAsync<BaseResponse<IEnumerable<ProductResponseModel>?>>();
         }
         catch (FlurlHttpException e)
         {
@@ -70,7 +70,7 @@ public class ProductService : IProductService
         {
             return await Url
                 .AppendPathSegment($"/{id}")
-                .GetJsonAsync<BaseResponse<ProductResponseModel?>>();
+                .ResilientGetJsonAsync<BaseResponse<ProductResponseModel?>>();
         }
         catch (FlurlHttpException e)
         {
@@ -87,7 +87,7 @@ public class ProductService : IProductService
         try
         {
             var result = await Url
-                .PostJsonAsync(request);
+                .ResilientPostJsonAsync(request);
 
             return await result.GetJsonAsync<BaseResponse<ProductResponseModel?>>();
         }
@@ -106,7 +106,7 @@ public class ProductService : IProductService
         try
         {
             var result = await Url
-                .PutJsonAsync(request);
+                .ResilientPutJsonAsync(request);
 
             return await result.GetJsonAsync<BaseResponse<ProductResponseModel?>>();
         }
@@ -126,7 +126,7 @@ public class ProductService : IProductService
         {
             var result = await Url
                 .AppendPathSegment($"/{id}")
-                .DeleteAsync();
+                .ResilientDeleteAsync();
 
             return await result.GetJsonAsync<BaseResponse<ProductResponseModel?>>();
         }

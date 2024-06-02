@@ -1,5 +1,8 @@
 ﻿namespace CustomerApiClient.Models.Requests;
 
+//[JsonObject(NamingStrategyType = typeof(CamelCaseNamingStrategy))]
+//[JsonObject(NamingStrategyType = typeof(KebabCaseNamingStrategy))]
+//[JsonObject(NamingStrategyType = typeof(SnakeCaseNamingStrategy))]
 public class CustomerSearchRequest
 {
     public int Page { get; set; } = 1;

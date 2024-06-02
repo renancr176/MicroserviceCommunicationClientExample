@@ -1,5 +1,11 @@
-﻿namespace ProductApiClient.Models.Requests;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 
+namespace ProductApiClient.Models.Requests;
+
+//[JsonObject(NamingStrategyType = typeof(CamelCaseNamingStrategy))]
+//[JsonObject(NamingStrategyType = typeof(KebabCaseNamingStrategy))]
+//[JsonObject(NamingStrategyType = typeof(SnakeCaseNamingStrategy))]
 public class ProductSearchRequest
 {
     public int Page { get; set; } = 1;
