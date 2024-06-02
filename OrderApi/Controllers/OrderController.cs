@@ -69,6 +69,7 @@ namespace OrderApi.Controllers
                     Products = o.Products.Select(p => new ProductModel()
                     {
                         Id = p.Id,
+                        ProductId = p.ProductId,
                         Name = p.Name,
                         Price = p.Price,
                         Quantity = p.Quantity,
@@ -109,6 +110,7 @@ namespace OrderApi.Controllers
                     Products = entity.Products.Select(p => new ProductModel()
                     {
                         Id = p.Id,
+                        ProductId = p.ProductId,
                         Name = p.Name,
                         Price = p.Price,
                         Quantity = p.Quantity,
@@ -192,6 +194,7 @@ namespace OrderApi.Controllers
                     Products = entity.Products.Select(p => new ProductModel()
                     {
                         Id = p.Id,
+                        ProductId = p.ProductId,
                         Name = p.Name,
                         Price = p.Price,
                         Quantity = p.Quantity,
