@@ -160,11 +160,11 @@ namespace OrderApi.Controllers
                         ids: request.Products.Select(x => x.Id),
                         active: true));
 
-                if (products.Data.Count() != request.Products.Count())
+                if (products.Data.Where(p => p.Active).Count() != request.Products.Count())
                     return BadRequest(new BaseResponse()
                     {
                         Errors = request.Products
-                            .Where(x => !products.Data.Any(p => p.Id == x.Id))
+                            .Where(x => !products.Data.Where(p => p.Active).Any(p => p.Id == x.Id))
                             .Select(x => new BaseResponseError()
                             {
                                 ErrorCode = "ProductNotFound",
