@@ -203,6 +203,7 @@ public class Startup : IStartup
 
     private void Init(IServiceProvider serviceProvider)
     {
-        serviceProvider.CustomerDbMigrate();
+        if (Environment.IsProduction())
+            serviceProvider.CustomerDbMigrate();
     }
 }

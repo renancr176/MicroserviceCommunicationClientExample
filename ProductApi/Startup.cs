@@ -204,6 +204,7 @@ public class Startup : IStartup
 
     private void Init(IServiceProvider serviceProvider)
     {
-        serviceProvider.ProductDbMigrate();
+        if (Environment.IsProduction())
+         serviceProvider.ProductDbMigrate();
     }
 }

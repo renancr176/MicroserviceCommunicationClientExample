@@ -2,7 +2,7 @@
 
 Set this project as Startup Project
 
-Open "Package Manager Console" select the projeto "CustomerApi" as option of "Default project"
+Open "Package Manager Console" select the projeto "ProductApi" as option of "Default project"
 
 Command to add new migration
 ```bash
